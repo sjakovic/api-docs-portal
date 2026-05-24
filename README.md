@@ -20,7 +20,7 @@ A self-hosted platform for managing API documentation with user authentication a
 
 ### Option 1: Download Binary
 
-Download the latest release for your platform from the [Releases](https://github.com/jakovic/api-docs-portal/releases) page.
+Download the latest release for your platform from the [Releases](https://github.com/sjakovic/api-docs-portal/releases) page.
 
 ```bash
 chmod +x api-docs-portal
@@ -33,7 +33,7 @@ Open `http://localhost:8080` - the setup wizard will guide you through creating 
 ### Option 2: Docker
 
 ```bash
-git clone https://github.com/jakovic/api-docs-portal.git
+git clone https://github.com/sjakovic/api-docs-portal.git
 cd api-docs-portal
 cp .env.example .env
 # Edit .env and set JWT_SECRET to a random string
@@ -45,7 +45,7 @@ docker compose up -d
 Requires Go 1.22+.
 
 ```bash
-git clone https://github.com/jakovic/api-docs-portal.git
+git clone https://github.com/sjakovic/api-docs-portal.git
 cd api-docs-portal
 make swagger-ui
 make build
