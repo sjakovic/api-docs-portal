@@ -1,0 +1,33 @@
+{{define "docs_openapi.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{template "head"}}
+    <title>{{.Doc.Name}} - {{siteTitle}}</title>
+    <link rel="stylesheet" href="/static/swagger-ui/swagger-ui.css">
+</head>
+<body>
+    {{template "nav" .}}
+    <div class="container main">
+        <div class="doc-header">
+            <a href="/docs" class="doc-back">&larr; Back to Docs</a>
+            <h1 class="doc-title">{{.Doc.Name}}</h1>
+            {{if .Doc.Version.Valid}}<span class="doc-version mono">{{.Doc.Version.String}}</span>{{end}}
+        </div>
+        <div class="card">
+            <div id="swagger-ui"></div>
+        </div>
+    </div>
+    <script src="/static/swagger-ui/swagger-ui-bundle.js"></script>
+    <script src="/static/swagger-ui/swagger-ui-standalone-preset.js"></script>
+    <script>
+    SwaggerUIBundle({
+        url: "/api/docs/{{.Doc.Slug}}/content",
+        dom_id: '#swagger-ui',
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        layout: "StandaloneLayout"
+    });
+    </script>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,43 @@
+{{define "setup.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{template "head"}}
+    <title>Setup - API Docs Portal</title>
+</head>
+<body class="center">
+    <div class="card card-lg" style="width:100%;max-width:420px;">
+        <h1 class="text-2xl font-bold text-center mb-1">Welcome</h1>
+        <p class="text-sm text-muted text-center mb-3">Set up your admin account to get started.</p>
+
+        {{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
+
+        <form method="POST" action="/setup">
+            <div class="form-group">
+                <label for="site_title" class="form-label">Site Title</label>
+                <input type="text" id="site_title" name="site_title" placeholder="API Docs Portal" class="form-input">
+                <p class="form-hint">Leave blank to use the default.</p>
+            </div>
+            <hr class="form-divider">
+            <div class="form-group">
+                <label for="name" class="form-label">Your Name</label>
+                <input type="text" id="name" name="name" required autofocus class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" required class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" required minlength="8" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="confirm_password" class="form-label">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="8" class="form-input">
+            </div>
+            <button type="submit" class="btn btn-primary w-full">Create Admin Account</button>
+        </form>
+    </div>
+</body>
+</html>
+{{end}}

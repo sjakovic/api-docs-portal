@@ -1,0 +1,35 @@
+{{define "head"}}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/static/css/app.css">
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+{{end}}
+
+{{define "nav"}}
+<nav class="nav">
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="/docs" class="nav-brand">{{siteTitle}}</a>
+            <div class="nav-links">
+                <a href="/docs" class="nav-link">Docs</a>
+                {{if eq .User.Role "admin"}}
+                <a href="/admin/docs" class="nav-link">Manage Docs</a>
+                <a href="/admin/users" class="nav-link">Users</a>
+                <a href="/admin/settings" class="nav-link">Settings</a>
+                {{end}}
+            </div>
+        </div>
+        <div class="nav-right">
+            <span class="nav-email">{{.User.Email}}</span>
+            <form method="POST" action="/api/auth/logout" class="inline">
+                <button type="submit" class="nav-logout">Logout</button>
+            </form>
+        </div>
+    </div>
+</nav>
+{{end}}
+
+{{define "toast"}}
+{{if .Success}}<div class="alert alert-success">{{.Success}}</div>{{end}}
+{{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
+{{end}}

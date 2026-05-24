@@ -1,0 +1,34 @@
+{{define "docs_external_url.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{template "head"}}
+    <title>{{.Doc.Name}} - {{siteTitle}}</title>
+</head>
+<body>
+    {{template "nav" .}}
+    <div class="container main">
+        <div class="doc-header">
+            <div class="flex-between">
+                <div>
+                    <a href="/docs" class="doc-back">&larr; Back to Docs</a>
+                    <h1 class="doc-title">{{.Doc.Name}}</h1>
+                </div>
+                {{if .Doc.ExternalURL.Valid}}
+                <a href="{{.Doc.ExternalURL.String}}" target="_blank" class="doc-open-link">Open in new tab &rarr;</a>
+                {{end}}
+            </div>
+        </div>
+        {{if .Doc.ExternalURL.Valid}}
+        <div class="card" style="padding:0;overflow:hidden;">
+            <iframe src="{{.Doc.ExternalURL.String}}" class="doc-iframe"></iframe>
+        </div>
+        {{else}}
+        <div class="card empty-state">
+            <p>No external URL configured for this document.</p>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>
+{{end}}

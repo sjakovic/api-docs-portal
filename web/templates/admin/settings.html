@@ -1,0 +1,28 @@
+{{define "admin_settings.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{template "head"}}
+    <title>Settings - {{siteTitle}}</title>
+</head>
+<body>
+    {{template "nav" .}}
+    <div class="container main">
+        <h1 class="text-2xl font-bold mb-3">Settings</h1>
+
+        {{template "toast" .}}
+
+        <div class="card" style="max-width:480px;">
+            <form method="POST" action="/admin/settings">
+                <div class="form-group">
+                    <label for="site_title" class="form-label">Site Title</label>
+                    <input type="text" id="site_title" name="site_title" value="{{.SiteTitle}}" required class="form-input">
+                    <p class="form-hint">Displayed in the navigation bar, login page, and browser tab.</p>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+{{end}}

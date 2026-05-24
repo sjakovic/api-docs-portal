@@ -1,0 +1,115 @@
+{{define "admin_docs.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{template "head"}}
+    <title>Manage Docs - {{siteTitle}}</title>
+</head>
+<body>
+    {{template "nav" .}}
+    <div class="container main">
+        <div class="flex-between mb-3">
+            <h1 class="text-2xl font-bold">Documentation</h1>
+            <button onclick="document.getElementById('create-form').classList.toggle('hidden')" class="btn btn-primary">Add Doc</button>
+        </div>
+
+        {{template "toast" .}}
+
+        <div id="create-form" class="hidden card mb-2">
+            <h2 class="text-lg font-semibold mb-2">New Documentation</h2>
+            <form method="POST" action="/admin/docs">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Slug (auto-generated if blank)</label>
+                        <input type="text" name="slug" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <select name="doc_type" id="create-doc-type" onchange="toggleDocFields('create')" class="form-select">
+                            <option value="openapi">OpenAPI / Swagger</option>
+                            <option value="markdown">Markdown</option>
+                            <option value="external_url">External URL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Version</label>
+                        <input type="text" name="version" placeholder="e.g., v1.0.0" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" name="description" class="form-input">
+                </div>
+                <div id="create-content-field" class="form-group">
+                    <label class="form-label">Content (JSON/YAML for OpenAPI, Markdown text)</label>
+                    <textarea name="content" rows="10" class="form-textarea form-textarea-mono"></textarea>
+                </div>
+                <div id="create-url-field" class="form-group hidden">
+                    <label class="form-label">External URL</label>
+                    <input type="url" name="external_url" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sort Order</label>
+                    <input type="number" name="sort_order" value="0" class="form-input form-input-sm">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Doc</button>
+            </form>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Docs}}
+                    <tr>
+                        <td>
+                            <div class="font-medium">{{.Name}}</div>
+                            <div class="text-sm text-muted">/docs/{{.Slug}}</div>
+                        </td>
+                        <td><span class="badge {{if eq .DocType "openapi"}}badge-openapi{{else if eq .DocType "markdown"}}badge-markdown{{else if eq .DocType "external_url"}}badge-external{{else}}badge-default{{end}}">{{.DocType}}</span></td>
+                        <td class="text-muted">{{if .Version.Valid}}{{.Version.String}}{{else}}-{{end}}</td>
+                        <td><span class="badge {{if .IsActive}}badge-active{{else}}badge-inactive{{end}}">{{if .IsActive}}Active{{else}}Inactive{{end}}</span></td>
+                        <td class="text-right">
+                            <a href="/docs/{{.Slug}}" class="btn-link mr-2">View</a>
+                            <a href="/admin/docs/{{.ID}}/permissions" class="btn-link btn-link-green mr-2">Permissions</a>
+                            {{if .IsActive}}
+                            <form method="POST" action="/admin/docs/{{.ID}}/delete" class="inline" onsubmit="return confirm('Deactivate this doc?')">
+                                <button type="submit" class="btn-danger">Deactivate</button>
+                            </form>
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+    function toggleDocFields(prefix) {
+        var docType = document.getElementById(prefix + '-doc-type').value;
+        var contentField = document.getElementById(prefix + '-content-field');
+        var urlField = document.getElementById(prefix + '-url-field');
+        if (docType === 'external_url') {
+            contentField.classList.add('hidden');
+            urlField.classList.remove('hidden');
+        } else {
+            contentField.classList.remove('hidden');
+            urlField.classList.add('hidden');
+        }
+    }
+    </script>
+</body>
+</html>
+{{end}}

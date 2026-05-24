@@ -1,0 +1,15 @@
+services:
+  portal:
+    build: .
+    ports:
+      - "${PORT:-8080}:8080"
+    volumes:
+      - portal-data:/app/data
+    environment:
+      - DB_PATH=/app/data/portal.db
+      - JWT_SECRET=${JWT_SECRET:-change-me}
+      - JWT_EXPIRY=${JWT_EXPIRY:-24h}
+    restart: unless-stopped
+
+volumes:
+  portal-data:
