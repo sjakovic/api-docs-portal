@@ -82,7 +82,7 @@
                         <td class="text-muted">{{if .Version.Valid}}{{.Version.String}}{{else}}-{{end}}</td>
                         <td><span class="badge {{if .IsActive}}badge-active{{else}}badge-inactive{{end}}">{{if .IsActive}}Active{{else}}Inactive{{end}}</span></td>
                         <td class="text-right">
-                            <a href="/docs/{{.Slug}}" class="btn-link mr-2">View</a>
+                            {{if .IsActive}}<a href="/docs/{{.Slug}}" class="btn-link mr-2">View</a>{{end}}
                             <a href="/admin/docs/{{.ID}}/edit" class="btn-link mr-2">Edit</a>
                             <a href="/admin/docs/{{.ID}}/permissions" class="btn-link btn-link-green mr-2">Permissions</a>
                             {{if .IsActive}}
