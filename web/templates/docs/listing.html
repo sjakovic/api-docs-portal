@@ -10,19 +10,22 @@
     <div class="container main">
         <h1 class="text-2xl font-bold mb-3">Documentation</h1>
 
-        {{if .Docs}}
-        <div class="doc-grid">
-            {{range .Docs}}
-            <a href="/docs/{{.Slug}}" class="doc-card">
-                <div class="doc-card-header">
-                    <span class="doc-card-title">{{.Name}}</span>
-                    <span class="badge {{if eq .DocType "openapi"}}badge-openapi{{else if eq .DocType "markdown"}}badge-markdown{{else if eq .DocType "external_url"}}badge-external{{else}}badge-default{{end}}">{{.DocType}}</span>
+        {{if .Groups}}
+            {{range .Groups}}
+                {{if .Name}}<h2 class="text-lg font-semibold text-muted mb-1 mt-2">{{.Name}}</h2>{{end}}
+                <div class="doc-grid mb-2">
+                    {{range .Docs}}
+                    <a href="/docs/{{.Slug}}" class="doc-card">
+                        <div class="doc-card-header">
+                            <span class="doc-card-title">{{.Name}}</span>
+                            <span class="badge {{if eq .DocType "openapi"}}badge-openapi{{else if eq .DocType "markdown"}}badge-markdown{{else if eq .DocType "external_url"}}badge-external{{else}}badge-default{{end}}">{{.DocType}}</span>
+                        </div>
+                        {{if .Description.Valid}}<p class="doc-card-desc">{{.Description.String}}</p>{{end}}
+                        {{if .Version.Valid}}<span class="doc-card-version mono">{{.Version.String}}</span>{{end}}
+                    </a>
+                    {{end}}
                 </div>
-                {{if .Description.Valid}}<p class="doc-card-desc">{{.Description.String}}</p>{{end}}
-                {{if .Version.Valid}}<span class="doc-card-version mono">{{.Version.String}}</span>{{end}}
-            </a>
             {{end}}
-        </div>
         {{else}}
         <div class="card empty-state">
             <p>No documentation available.</p>

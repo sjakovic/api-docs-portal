@@ -1,0 +1,97 @@
+{{define "admin_groups.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{template "head"}}
+    <title>Groups - {{siteTitle}}</title>
+</head>
+<body>
+    {{template "nav" .}}
+    <div class="container main">
+        <div class="flex-between mb-3">
+            <h1 class="text-2xl font-bold">Doc Groups</h1>
+            <button onclick="document.getElementById('create-form').classList.toggle('hidden')" class="btn btn-primary">Add Group</button>
+        </div>
+
+        {{template "toast" .}}
+
+        <div id="create-form" class="hidden card mb-2">
+            <h2 class="text-lg font-semibold mb-2">New Group</h2>
+            <form method="POST" action="/admin/groups" class="flex flex-gap items-center">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                    <label class="form-label">Name</label>
+                    <input type="text" name="name" required class="form-input">
+                </div>
+                <div class="form-group" style="width:120px;margin-bottom:0;">
+                    <label class="form-label">Sort Order</label>
+                    <input type="number" name="sort_order" value="0" class="form-input">
+                </div>
+                <div style="padding-top:1.25rem;">
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Sort Order</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Groups}}
+                    <tr>
+                        <td class="font-medium">{{.Name}}</td>
+                        <td class="text-muted">{{.SortOrder}}</td>
+                        <td class="text-right">
+                            <button onclick="editGroup({{.ID}}, '{{.Name}}', {{.SortOrder}})" class="btn-link mr-2">Edit</button>
+                            <form method="POST" action="/admin/groups/{{.ID}}/delete" class="inline" onsubmit="return confirm('Delete this group? Docs in this group will become ungrouped.')">
+                                <button type="submit" class="btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{if not .Groups}}
+                    <tr><td colspan="3" class="text-center text-muted" style="padding:2rem;">No groups yet. Create one to organize your docs.</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="edit-modal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+            <div class="modal-content">
+                <h2 class="text-lg font-semibold mb-2">Edit Group</h2>
+                <form id="edit-form" method="POST">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" id="edit-name" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sort Order</label>
+                        <input type="number" name="sort_order" id="edit-sort" class="form-input">
+                    </div>
+                    <div class="flex-between">
+                        <button type="button" onclick="document.getElementById('edit-modal').classList.add('hidden')" class="btn-ghost">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') document.getElementById('edit-modal').classList.add('hidden');
+    });
+    function editGroup(id, name, sortOrder) {
+        document.getElementById('edit-form').action = '/admin/groups/' + id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-sort').value = sortOrder;
+        document.getElementById('edit-modal').classList.remove('hidden');
+    }
+    </script>
+</body>
+</html>
+{{end}}

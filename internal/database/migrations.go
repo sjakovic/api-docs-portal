@@ -66,6 +66,16 @@ var migrations = []struct {
 		);
 		INSERT OR IGNORE INTO settings (key, value) VALUES ('site_title', 'API Docs Portal');`,
 	},
+	{
+		name: "006_create_doc_groups",
+		sql: `CREATE TABLE IF NOT EXISTS doc_groups (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);
+		ALTER TABLE docs ADD COLUMN group_id INTEGER REFERENCES doc_groups(id) ON DELETE SET NULL;`,
+	},
 }
 
 func runMigrations(db *sql.DB) error {

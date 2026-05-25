@@ -39,6 +39,13 @@
                         <label class="form-label">Version</label>
                         <input type="text" name="version" placeholder="e.g., v1.0.0" class="form-input">
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Group</label>
+                        <select name="group_id" class="form-select">
+                            <option value="">No group</option>
+                            {{range .Groups}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Description</label>

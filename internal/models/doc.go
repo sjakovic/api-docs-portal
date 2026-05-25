@@ -17,10 +17,12 @@ type Doc struct {
 	Content     sql.NullString `json:"content"`
 	ExternalURL sql.NullString `json:"external_url"`
 	Version     sql.NullString `json:"version"`
+	GroupID     sql.NullInt64  `json:"group_id"`
 	SortOrder   int            `json:"sort_order"`
 	IsActive    bool           `json:"is_active"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
+	GroupName   string         `json:"-"`
 }
 
 type DocStore struct {
@@ -31,14 +33,28 @@ func NewDocStore(db *sql.DB) *DocStore {
 	return &DocStore{db: db}
 }
 
-func (s *DocStore) Create(name, slug, description, docType, content, externalURL, version string, sortOrder int) (*Doc, error) {
+const docCols = `d.id, d.name, d.slug, d.description, d.doc_type, d.content, d.external_url, d.version, d.group_id, d.sort_order, d.is_active, d.created_at, d.updated_at, COALESCE(g.name, '')`
+const docJoin = `FROM docs d LEFT JOIN doc_groups g ON d.group_id = g.id`
+
+func scanDoc(row interface{ Scan(...interface{}) error }) (*Doc, error) {
+	d := &Doc{}
+	err := row.Scan(&d.ID, &d.Name, &d.Slug, &d.Description, &d.DocType, &d.Content, &d.ExternalURL, &d.Version, &d.GroupID, &d.SortOrder, &d.IsActive, &d.CreatedAt, &d.UpdatedAt, &d.GroupName)
+	return d, err
+}
+
+func (s *DocStore) Create(name, slug, description, docType, content, externalURL, version string, groupID int64, sortOrder int) (*Doc, error) {
 	if slug == "" {
 		slug = slugify(name)
 	}
 
+	var gid interface{}
+	if groupID > 0 {
+		gid = groupID
+	}
+
 	result, err := s.db.Exec(
-		`INSERT INTO docs (name, slug, description, doc_type, content, external_url, version, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		name, slug, nullString(description), docType, nullString(content), nullString(externalURL), nullString(version), sortOrder,
+		`INSERT INTO docs (name, slug, description, doc_type, content, external_url, version, group_id, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		name, slug, nullString(description), docType, nullString(content), nullString(externalURL), nullString(version), gid, sortOrder,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("insert doc: %w", err)
@@ -49,10 +65,7 @@ func (s *DocStore) Create(name, slug, description, docType, content, externalURL
 }
 
 func (s *DocStore) GetByID(id int64) (*Doc, error) {
-	d := &Doc{}
-	err := s.db.QueryRow(
-		`SELECT id, name, slug, description, doc_type, content, external_url, version, sort_order, is_active, created_at, updated_at FROM docs WHERE id = ?`, id,
-	).Scan(&d.ID, &d.Name, &d.Slug, &d.Description, &d.DocType, &d.Content, &d.ExternalURL, &d.Version, &d.SortOrder, &d.IsActive, &d.CreatedAt, &d.UpdatedAt)
+	d, err := scanDoc(s.db.QueryRow(`SELECT `+docCols+` `+docJoin+` WHERE d.id = ?`, id))
 	if err != nil {
 		return nil, fmt.Errorf("get doc: %w", err)
 	}
@@ -60,10 +73,7 @@ func (s *DocStore) GetByID(id int64) (*Doc, error) {
 }
 
 func (s *DocStore) GetBySlug(slug string) (*Doc, error) {
-	d := &Doc{}
-	err := s.db.QueryRow(
-		`SELECT id, name, slug, description, doc_type, content, external_url, version, sort_order, is_active, created_at, updated_at FROM docs WHERE slug = ? AND is_active = 1`, slug,
-	).Scan(&d.ID, &d.Name, &d.Slug, &d.Description, &d.DocType, &d.Content, &d.ExternalURL, &d.Version, &d.SortOrder, &d.IsActive, &d.CreatedAt, &d.UpdatedAt)
+	d, err := scanDoc(s.db.QueryRow(`SELECT `+docCols+` `+docJoin+` WHERE d.slug = ? AND d.is_active = 1`, slug))
 	if err != nil {
 		return nil, fmt.Errorf("get doc by slug: %w", err)
 	}
@@ -71,62 +81,32 @@ func (s *DocStore) GetBySlug(slug string) (*Doc, error) {
 }
 
 func (s *DocStore) List() ([]*Doc, error) {
-	rows, err := s.db.Query(
-		`SELECT id, name, slug, description, doc_type, content, external_url, version, sort_order, is_active, created_at, updated_at FROM docs ORDER BY sort_order, name`,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("list docs: %w", err)
-	}
-	defer rows.Close()
-
-	var docs []*Doc
-	for rows.Next() {
-		d := &Doc{}
-		if err := rows.Scan(&d.ID, &d.Name, &d.Slug, &d.Description, &d.DocType, &d.Content, &d.ExternalURL, &d.Version, &d.SortOrder, &d.IsActive, &d.CreatedAt, &d.UpdatedAt); err != nil {
-			return nil, fmt.Errorf("scan doc: %w", err)
-		}
-		docs = append(docs, d)
-	}
-	return docs, rows.Err()
+	return s.queryDocs(`SELECT ` + docCols + ` ` + docJoin + ` ORDER BY COALESCE(g.sort_order, 999999), d.sort_order, d.name`)
 }
 
 func (s *DocStore) ListForUser(userID int64) ([]*Doc, error) {
-	rows, err := s.db.Query(
-		`SELECT d.id, d.name, d.slug, d.description, d.doc_type, d.content, d.external_url, d.version, d.sort_order, d.is_active, d.created_at, d.updated_at
-		FROM docs d
+	return s.queryDocs(
+		`SELECT `+docCols+` `+docJoin+`
 		INNER JOIN user_doc_access uda ON d.id = uda.doc_id
 		WHERE uda.user_id = ? AND d.is_active = 1
-		ORDER BY d.sort_order, d.name`, userID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("list docs for user: %w", err)
-	}
-	defer rows.Close()
-
-	var docs []*Doc
-	for rows.Next() {
-		d := &Doc{}
-		if err := rows.Scan(&d.ID, &d.Name, &d.Slug, &d.Description, &d.DocType, &d.Content, &d.ExternalURL, &d.Version, &d.SortOrder, &d.IsActive, &d.CreatedAt, &d.UpdatedAt); err != nil {
-			return nil, fmt.Errorf("scan doc: %w", err)
-		}
-		docs = append(docs, d)
-	}
-	return docs, rows.Err()
+		ORDER BY COALESCE(g.sort_order, 999999), d.sort_order, d.name`, userID)
 }
 
 func (s *DocStore) ListActive() ([]*Doc, error) {
-	rows, err := s.db.Query(
-		`SELECT id, name, slug, description, doc_type, content, external_url, version, sort_order, is_active, created_at, updated_at FROM docs WHERE is_active = 1 ORDER BY sort_order, name`,
-	)
+	return s.queryDocs(`SELECT ` + docCols + ` ` + docJoin + ` WHERE d.is_active = 1 ORDER BY COALESCE(g.sort_order, 999999), d.sort_order, d.name`)
+}
+
+func (s *DocStore) queryDocs(query string, args ...interface{}) ([]*Doc, error) {
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("list active docs: %w", err)
+		return nil, fmt.Errorf("query docs: %w", err)
 	}
 	defer rows.Close()
 
 	var docs []*Doc
 	for rows.Next() {
-		d := &Doc{}
-		if err := rows.Scan(&d.ID, &d.Name, &d.Slug, &d.Description, &d.DocType, &d.Content, &d.ExternalURL, &d.Version, &d.SortOrder, &d.IsActive, &d.CreatedAt, &d.UpdatedAt); err != nil {
+		d, err := scanDoc(rows)
+		if err != nil {
 			return nil, fmt.Errorf("scan doc: %w", err)
 		}
 		docs = append(docs, d)
@@ -134,10 +114,15 @@ func (s *DocStore) ListActive() ([]*Doc, error) {
 	return docs, rows.Err()
 }
 
-func (s *DocStore) Update(id int64, name, slug, description, docType, content, externalURL, version string, sortOrder int, isActive bool) error {
+func (s *DocStore) Update(id int64, name, slug, description, docType, content, externalURL, version string, groupID int64, sortOrder int, isActive bool) error {
+	var gid interface{}
+	if groupID > 0 {
+		gid = groupID
+	}
+
 	_, err := s.db.Exec(
-		`UPDATE docs SET name = ?, slug = ?, description = ?, doc_type = ?, content = ?, external_url = ?, version = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-		name, slug, nullString(description), docType, nullString(content), nullString(externalURL), nullString(version), sortOrder, isActive, id,
+		`UPDATE docs SET name = ?, slug = ?, description = ?, doc_type = ?, content = ?, external_url = ?, version = ?, group_id = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+		name, slug, nullString(description), docType, nullString(content), nullString(externalURL), nullString(version), gid, sortOrder, isActive, id,
 	)
 	return err
 }

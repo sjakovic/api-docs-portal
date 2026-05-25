@@ -31,6 +31,7 @@ func main() {
 
 	users := models.NewUserStore(db)
 	docs := models.NewDocStore(db)
+	groups := models.NewDocGroupStore(db)
 	permissions := models.NewPermissionStore(db)
 	settings := models.NewSettingsStore(db)
 
@@ -55,7 +56,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	r := router.New(cfg, tmpl, users, docs, permissions, settings, http.FS(staticFS))
+	r := router.New(cfg, tmpl, users, docs, groups, permissions, settings, http.FS(staticFS))
 
 	slog.Info("server starting", "addr", cfg.Addr())
 	if err := http.ListenAndServe(cfg.Addr(), r); err != nil {

@@ -12,12 +12,13 @@ import (
 )
 
 type AdminDocHandler struct {
-	docs *models.DocStore
-	tmpl *template.Template
+	docs   *models.DocStore
+	groups *models.DocGroupStore
+	tmpl   *template.Template
 }
 
-func NewAdminDocHandler(docs *models.DocStore, tmpl *template.Template) *AdminDocHandler {
-	return &AdminDocHandler{docs: docs, tmpl: tmpl}
+func NewAdminDocHandler(docs *models.DocStore, groups *models.DocGroupStore, tmpl *template.Template) *AdminDocHandler {
+	return &AdminDocHandler{docs: docs, groups: groups, tmpl: tmpl}
 }
 
 func (h *AdminDocHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -28,9 +29,15 @@ func (h *AdminDocHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	groups, err := h.groups.List()
+	if err != nil {
+		slog.Error("list groups", "error", err)
+	}
+
 	h.tmpl.ExecuteTemplate(w, "admin_docs.html", map[string]interface{}{
 		"User":    middleware.UserFromContext(r.Context()),
 		"Docs":    docs,
+		"Groups":  groups,
 		"Success": r.URL.Query().Get("success"),
 		"Error":   r.URL.Query().Get("error"),
 	})
@@ -49,6 +56,7 @@ func (h *AdminDocHandler) Create(w http.ResponseWriter, r *http.Request) {
 	content := r.FormValue("content")
 	externalURL := r.FormValue("external_url")
 	version := r.FormValue("version")
+	groupID, _ := strconv.ParseInt(r.FormValue("group_id"), 10, 64)
 	sortOrder, _ := strconv.Atoi(r.FormValue("sort_order"))
 
 	if name == "" || docType == "" {
@@ -56,7 +64,7 @@ func (h *AdminDocHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := h.docs.Create(name, slug, description, docType, content, externalURL, version, sortOrder); err != nil {
+	if _, err := h.docs.Create(name, slug, description, docType, content, externalURL, version, groupID, sortOrder); err != nil {
 		slog.Error("create doc", "error", err)
 		http.Redirect(w, r, "/admin/docs?error=Failed+to+create+doc", http.StatusSeeOther)
 		return
@@ -78,10 +86,16 @@ func (h *AdminDocHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	groups, err := h.groups.List()
+	if err != nil {
+		slog.Error("list groups", "error", err)
+	}
+
 	h.tmpl.ExecuteTemplate(w, "admin_docs_edit.html", map[string]interface{}{
-		"User":  middleware.UserFromContext(r.Context()),
-		"Doc":   doc,
-		"Error": r.URL.Query().Get("error"),
+		"User":   middleware.UserFromContext(r.Context()),
+		"Doc":    doc,
+		"Groups": groups,
+		"Error":  r.URL.Query().Get("error"),
 	})
 }
 
@@ -104,10 +118,11 @@ func (h *AdminDocHandler) Update(w http.ResponseWriter, r *http.Request) {
 	content := r.FormValue("content")
 	externalURL := r.FormValue("external_url")
 	version := r.FormValue("version")
+	groupID, _ := strconv.ParseInt(r.FormValue("group_id"), 10, 64)
 	sortOrder, _ := strconv.Atoi(r.FormValue("sort_order"))
 	isActive := r.FormValue("is_active") == "on" || r.FormValue("is_active") == "true"
 
-	if err := h.docs.Update(id, name, slug, description, docType, content, externalURL, version, sortOrder, isActive); err != nil {
+	if err := h.docs.Update(id, name, slug, description, docType, content, externalURL, version, groupID, sortOrder, isActive); err != nil {
 		slog.Error("update doc", "error", err)
 		http.Redirect(w, r, "/admin/docs?error=Failed+to+update+doc", http.StatusSeeOther)
 		return

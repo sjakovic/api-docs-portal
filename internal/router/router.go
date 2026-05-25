@@ -12,7 +12,7 @@ import (
 	"github.com/jakovic/api-docs-portal/internal/models"
 )
 
-func New(cfg *config.Config, tmpl *template.Template, users *models.UserStore, docs *models.DocStore, permissions *models.PermissionStore, settings *models.SettingsStore, staticFS http.FileSystem) chi.Router {
+func New(cfg *config.Config, tmpl *template.Template, users *models.UserStore, docs *models.DocStore, groups *models.DocGroupStore, permissions *models.PermissionStore, settings *models.SettingsStore, staticFS http.FileSystem) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(chimw.Logger)
@@ -25,7 +25,8 @@ func New(cfg *config.Config, tmpl *template.Template, users *models.UserStore, d
 	setupHandler := handlers.NewSetupHandler(users, settings, auth, cfg.JWTExpiry, tmpl)
 	authHandler := handlers.NewAuthHandler(users, auth, cfg.JWTExpiry, tmpl)
 	adminUserHandler := handlers.NewAdminUserHandler(users, tmpl)
-	adminDocHandler := handlers.NewAdminDocHandler(docs, tmpl)
+	adminDocHandler := handlers.NewAdminDocHandler(docs, groups, tmpl)
+	adminGroupHandler := handlers.NewAdminGroupHandler(groups, tmpl)
 	adminPermHandler := handlers.NewAdminPermissionHandler(permissions, users, docs, tmpl)
 	adminSettingsHandler := handlers.NewAdminSettingsHandler(settings, tmpl)
 	docHandler := handlers.NewDocHandler(docs, permissions, tmpl)
@@ -80,6 +81,11 @@ func New(cfg *config.Config, tmpl *template.Template, users *models.UserStore, d
 			r.Post("/admin/docs/{id}", adminDocHandler.Update)
 			r.Delete("/admin/docs/{id}", adminDocHandler.Delete)
 			r.Post("/admin/docs/{id}/delete", adminDocHandler.Delete)
+
+			r.Get("/admin/groups", adminGroupHandler.List)
+			r.Post("/admin/groups", adminGroupHandler.Create)
+			r.Post("/admin/groups/{id}", adminGroupHandler.Update)
+			r.Post("/admin/groups/{id}/delete", adminGroupHandler.Delete)
 
 			r.Get("/admin/docs/{id}/permissions", adminPermHandler.DocPermissions)
 			r.Post("/admin/docs/{id}/permissions", adminPermHandler.SetDocPermissions)
