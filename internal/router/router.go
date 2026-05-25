@@ -75,6 +75,7 @@ func New(cfg *config.Config, tmpl *template.Template, users *models.UserStore, d
 
 			r.Get("/admin/docs", adminDocHandler.List)
 			r.Post("/admin/docs", adminDocHandler.Create)
+			r.Get("/admin/docs/{id}/edit", adminDocHandler.Edit)
 			r.Put("/admin/docs/{id}", adminDocHandler.Update)
 			r.Post("/admin/docs/{id}", adminDocHandler.Update)
 			r.Delete("/admin/docs/{id}", adminDocHandler.Delete)

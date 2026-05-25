@@ -1,0 +1,86 @@
+{{define "admin_docs_edit.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{template "head"}}
+    <title>Edit {{.Doc.Name}} - {{siteTitle}}</title>
+</head>
+<body>
+    {{template "nav" .}}
+    <div class="container main">
+        <div class="mb-3">
+            <a href="/admin/docs" class="doc-back">&larr; Back to Docs</a>
+            <h1 class="text-2xl font-bold mt-1">Edit: {{.Doc.Name}}</h1>
+        </div>
+
+        {{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
+
+        <div class="card">
+            <form method="POST" action="/admin/docs/{{.Doc.ID}}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" value="{{.Doc.Name}}" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Slug</label>
+                        <input type="text" name="slug" value="{{.Doc.Slug}}" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <select name="doc_type" id="edit-doc-type" onchange="toggleDocFields('edit')" class="form-select">
+                            <option value="openapi" {{if eq .Doc.DocType "openapi"}}selected{{end}}>OpenAPI / Swagger</option>
+                            <option value="markdown" {{if eq .Doc.DocType "markdown"}}selected{{end}}>Markdown</option>
+                            <option value="external_url" {{if eq .Doc.DocType "external_url"}}selected{{end}}>External URL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Version</label>
+                        <input type="text" name="version" value="{{if .Doc.Version.Valid}}{{.Doc.Version.String}}{{end}}" placeholder="e.g., v1.0.0" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" name="description" value="{{if .Doc.Description.Valid}}{{.Doc.Description.String}}{{end}}" class="form-input">
+                </div>
+                <div id="edit-content-field" class="form-group {{if eq .Doc.DocType "external_url"}}hidden{{end}}">
+                    <label class="form-label">Content (JSON/YAML for OpenAPI, Markdown text)</label>
+                    <textarea name="content" rows="20" class="form-textarea form-textarea-mono">{{if .Doc.Content.Valid}}{{.Doc.Content.String}}{{end}}</textarea>
+                </div>
+                <div id="edit-url-field" class="form-group {{if ne .Doc.DocType "external_url"}}hidden{{end}}">
+                    <label class="form-label">External URL</label>
+                    <input type="url" name="external_url" value="{{if .Doc.ExternalURL.Valid}}{{.Doc.ExternalURL.String}}{{end}}" class="form-input">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Sort Order</label>
+                        <input type="number" name="sort_order" value="{{.Doc.SortOrder}}" class="form-input form-input-sm">
+                    </div>
+                    <div class="form-group" style="padding-top:1.5rem;">
+                        <label><input type="checkbox" name="is_active" value="on" class="form-checkbox" {{if .Doc.IsActive}}checked{{end}}>Active</label>
+                    </div>
+                </div>
+                <div class="flex-between">
+                    <a href="/admin/docs" class="btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+    function toggleDocFields(prefix) {
+        var docType = document.getElementById(prefix + '-doc-type').value;
+        var contentField = document.getElementById(prefix + '-content-field');
+        var urlField = document.getElementById(prefix + '-url-field');
+        if (docType === 'external_url') {
+            contentField.classList.add('hidden');
+            urlField.classList.remove('hidden');
+        } else {
+            contentField.classList.remove('hidden');
+            urlField.classList.add('hidden');
+        }
+    }
+    </script>
+</body>
+</html>
+{{end}}

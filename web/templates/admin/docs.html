@@ -83,6 +83,7 @@
                         <td><span class="badge {{if .IsActive}}badge-active{{else}}badge-inactive{{end}}">{{if .IsActive}}Active{{else}}Inactive{{end}}</span></td>
                         <td class="text-right">
                             <a href="/docs/{{.Slug}}" class="btn-link mr-2">View</a>
+                            <a href="/admin/docs/{{.ID}}/edit" class="btn-link mr-2">Edit</a>
                             <a href="/admin/docs/{{.ID}}/permissions" class="btn-link btn-link-green mr-2">Permissions</a>
                             {{if .IsActive}}
                             <form method="POST" action="/admin/docs/{{.ID}}/delete" class="inline" onsubmit="return confirm('Deactivate this doc?')">

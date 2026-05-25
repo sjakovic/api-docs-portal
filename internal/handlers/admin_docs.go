@@ -65,6 +65,26 @@ func (h *AdminDocHandler) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/docs?success=Doc+created", http.StatusSeeOther)
 }
 
+func (h *AdminDocHandler) Edit(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	doc, err := h.docs.GetByID(id)
+	if err != nil {
+		http.Error(w, "Doc not found", http.StatusNotFound)
+		return
+	}
+
+	h.tmpl.ExecuteTemplate(w, "admin_docs_edit.html", map[string]interface{}{
+		"User":  middleware.UserFromContext(r.Context()),
+		"Doc":   doc,
+		"Error": r.URL.Query().Get("error"),
+	})
+}
+
 func (h *AdminDocHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
